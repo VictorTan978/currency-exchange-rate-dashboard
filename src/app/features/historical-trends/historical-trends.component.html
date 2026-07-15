@@ -49,7 +49,7 @@
       @if (loading()) {
         <div class="trends__loading"><app-loading-spinner label="Loading history…" /></div>
       }
-      <canvas baseChart type="line" [data]="chartData()" [options]="chartOptions"></canvas>
+      <canvas baseChart type="line" [data]="chartData()" [options]="chartOptions()"></canvas>
     </div>
   }
 </app-card>

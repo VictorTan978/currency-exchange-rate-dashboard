@@ -18,6 +18,11 @@ front-end assessment.
   latest rates (cross-rate), with a one-click swap.
 - **Filtering & search** — debounced search over currency code and name.
 
+**Advanced**
+
+- **Dynamic theming** — light/dark toggle that persists to localStorage and follows
+  the OS preference on first visit; the chart re-themes its palette and axis ink.
+
 **Quality**
 
 - Modular, standalone-component architecture with clear separation of concerns.
@@ -25,9 +30,8 @@ front-end assessment.
 - E2E tests (Cypress) covering the key user flows.
 - CI/CD pipeline (GitHub Actions) that lints, tests, builds, and deploys to GitHub Pages.
 
-> **Advanced features** (real-time polling, offline caching, dark-mode toggle) are
-> planned as a follow-up phase — see [Roadmap](#roadmap). The design-token
-> foundation for theming is already in place in `src/styles.scss`.
+> **Dynamic theming is implemented.** The remaining advanced features (real-time
+> polling and offline caching) are planned as a follow-up phase — see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -147,9 +151,9 @@ repository.
 
 ## Roadmap
 
-Advanced features to layer on next, in order:
+Advanced features implemented and remaining:
 
-1. **Real-time updates** — polling with an optimized interval (paused when the tab is hidden).
-2. **Offline mode** — cache the last rates + history in localStorage/IndexedDB, with a
-   "data not live" indicator.
-3. **Dynamic theming** — a light/dark toggle (CSS-variable foundation already present).
+- ✅ **Dynamic theming** — light/dark toggle (persisted, OS-aware).
+- ⬜ **Real-time updates** — polling with an optimized interval (paused when the tab is hidden).
+- ⬜ **Offline mode** — cache the last rates + history in localStorage/IndexedDB, with a
+  "data not live" indicator.

@@ -2,6 +2,15 @@
   <div class="app-header__inner">
     <span class="app-header__logo" aria-hidden="true">💱</span>
     <h1>{{ title }}</h1>
+    <button
+      type="button"
+      class="app-header__theme"
+      [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+      [attr.aria-pressed]="theme.isDark()"
+      (click)="theme.toggle()"
+    >
+      {{ theme.isDark() ? '☀️' : '🌙' }}
+    </button>
   </div>
 </header>
 

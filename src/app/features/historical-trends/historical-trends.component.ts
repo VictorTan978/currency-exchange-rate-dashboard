@@ -9,6 +9,7 @@ import { API_CONFIG } from '../../core/config/api.config';
 import { Currency } from '../../core/models/currency.model';
 import { Aggregation, CurrencySeries } from '../../core/models/historical.model';
 import { HistoricalService } from '../../core/services/historical.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { CurrencySelectComponent } from '../../shared/components/currency-select/currency-select.component';
 import { ErrorMessageComponent } from '../../shared/components/error-message/error-message.component';
@@ -43,6 +44,7 @@ const AGGREGATIONS: Aggregation[] = ['daily', 'weekly', 'monthly'];
 })
 export class HistoricalTrendsComponent {
   private readonly historical = inject(HistoricalService);
+  private readonly theme = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly maxCurrencies = API_CONFIG.maxTrendCurrencies;
@@ -89,19 +91,25 @@ export class HistoricalTrendsComponent {
     };
   });
 
-  readonly chartOptions: ChartConfiguration<'line'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
-      tooltip: { enabled: true },
-    },
-    scales: {
-      x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
-      y: { grid: { color: 'rgba(140,140,160,0.15)' }, beginAtZero: false },
-    },
-  };
+  /** Chart options; recomputed on theme change so axis/legend ink stays legible. */
+  readonly chartOptions = computed<ChartConfiguration<'line'>['options']>(() => {
+    const dark = this.theme.isDark();
+    const tick = dark ? '#97a3bd' : '#5b6577';
+    const grid = dark ? 'rgba(255,255,255,0.08)' : 'rgba(20,30,60,0.08)';
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, color: tick } },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+        y: { grid: { color: grid }, ticks: { color: tick }, beginAtZero: false },
+      },
+    };
+  });
 
   constructor() {
     this.loadCurrencies();
@@ -172,7 +180,6 @@ export class HistoricalTrendsComponent {
   }
 
   private seriesColors(): string[] {
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return dark ? SERIES_COLORS_DARK : SERIES_COLORS_LIGHT;
+    return this.theme.isDark() ? SERIES_COLORS_DARK : SERIES_COLORS_LIGHT;
   }
 }

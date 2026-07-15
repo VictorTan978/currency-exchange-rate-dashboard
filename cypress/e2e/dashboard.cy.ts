@@ -53,6 +53,17 @@ describe('Currency Exchange Rate Dashboard', () => {
       .should('have.attr', 'aria-pressed', 'true');
   });
 
+  it('toggles between light and dark themes', () => {
+    cy.get('html')
+      .invoke('attr', 'data-theme')
+      .then((before) => {
+        cy.get('.app-header__theme').click();
+        cy.get('html').should(($html) => {
+          expect($html.attr('data-theme')).to.not.equal(before);
+        });
+      });
+  });
+
   it('limits currency comparison to three selections', () => {
     cy.wait('@timeseries');
     // EUR, GBP, CHF are selected by default (3/3); adding JPY must be blocked.
