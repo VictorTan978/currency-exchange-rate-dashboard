@@ -1,1 +1,84 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles + design tokens.
+   Theme is driven by CSS custom properties on :root, with a [data-theme="dark"]
+   override so a theme toggle (advanced feature) can flip a single attribute. */
+
+:root {
+  --color-bg: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f0f2f8;
+  --color-border: #e2e6ef;
+  --color-text: #1a2233;
+  --color-text-muted: #5b6577;
+  --color-primary: #2f6df6;
+  --color-primary-contrast: #ffffff;
+  --color-positive: #1a9d6a;
+  --color-danger: #d64550;
+  --color-warning-bg: #fff4d6;
+  --color-warning-text: #7a5b00;
+  --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.06);
+  --shadow-md: 0 6px 20px rgba(20, 30, 60, 0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --space: 1rem;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #0f1626;
+  --color-surface: #172033;
+  --color-surface-alt: #1e2942;
+  --color-border: #2a3653;
+  --color-text: #e7ecf6;
+  --color-text-muted: #97a3bd;
+  --color-primary: #5b8dff;
+  --color-primary-contrast: #0f1626;
+  --color-positive: #45c98c;
+  --color-danger: #ff6b76;
+  --color-warning-bg: #3a3010;
+  --color-warning-text: #ffd874;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.5rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+button {
+  font-size: 0.95rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

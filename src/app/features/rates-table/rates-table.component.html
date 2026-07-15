@@ -1,0 +1,35 @@
+<app-card
+  title="Exchange Rates"
+  [subtitle]="lastUpdated() ? ('Rates per 1 ' + base() + ' · updated ' + (lastUpdated() | date: 'medium')) : 'Live exchange rates'"
+>
+  <div card-actions class="rates__base">
+    <app-currency-select
+      label="Base currency"
+      [currencies]="baseOptions"
+      [value]="base()"
+      (valueChange)="onBaseChange($event)"
+      [disabled]="loading()"
+    />
+  </div>
+
+  <div class="rates__search">
+    <app-search-filter placeholder="Search by code or name…" (searchChange)="onSearch($event)" />
+    @if (loading()) {
+      <app-loading-spinner label="Loading rates…" />
+    }
+  </div>
+
+  @if (error()) {
+    <app-error-message [message]="error()!" (retry)="retry()" />
+  } @else {
+    <div class="rates__table-wrap">
+      <app-sortable-table
+        [columns]="columns"
+        [rows]="filteredRates()"
+        rowKey="code"
+        [initialSort]="{ key: 'code', direction: 'asc' }"
+      />
+    </div>
+    <p class="rates__count">{{ filteredRates().length }} currencies</p>
+  }
+</app-card>

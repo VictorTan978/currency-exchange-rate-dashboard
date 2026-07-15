@@ -1,0 +1,55 @@
+<app-card title="Historical Trends" subtitle="Rates vs {{ base() }} over the past month">
+  <div card-actions class="trends__controls">
+    <app-currency-select
+      label="Base"
+      [currencies]="currencies()"
+      [value]="base()"
+      (valueChange)="onBaseChange($event)"
+    />
+    <div class="trends__agg" role="group" aria-label="Aggregation">
+      @for (mode of aggregations; track mode) {
+        <button
+          type="button"
+          class="trends__agg-btn"
+          [class.trends__agg-btn--active]="aggregation() === mode"
+          [attr.aria-pressed]="aggregation() === mode"
+          (click)="setAggregation(mode)"
+        >
+          {{ mode | titlecase }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="trends__chips">
+    <span class="trends__chips-label">
+      Compare currencies ({{ selected().length }}/{{ maxCurrencies }}):
+    </span>
+    @for (currency of currencyOptions(); track currency.code) {
+      <button
+        type="button"
+        class="chip"
+        [class.chip--on]="isSelected(currency.code)"
+        [disabled]="!isSelected(currency.code) && atLimit()"
+        [attr.aria-pressed]="isSelected(currency.code)"
+        [title]="currency.name"
+        (click)="toggleCurrency(currency.code)"
+      >
+        {{ currency.code }}
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <app-error-message [message]="error()!" (retry)="reload()" />
+  } @else if (selected().length === 0) {
+    <p class="trends__empty">Select at least one currency to see its trend.</p>
+  } @else {
+    <div class="trends__chart-wrap">
+      @if (loading()) {
+        <div class="trends__loading"><app-loading-spinner label="Loading history…" /></div>
+      }
+      <canvas baseChart type="line" [data]="chartData()" [options]="chartOptions"></canvas>
+    </div>
+  }
+</app-card>

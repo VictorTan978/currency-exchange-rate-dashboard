@@ -1,0 +1,50 @@
+<app-card title="Currency Converter" subtitle="Convert using the latest rates">
+  @if (!ready()) {
+    <p class="conv__hint">Waiting for exchange rates…</p>
+  } @else {
+    <div class="conv__grid">
+      <div class="conv__field conv__field--amount">
+        <label class="conv__label" for="conv-amount">Amount</label>
+        <input
+          id="conv-amount"
+          type="number"
+          min="0"
+          step="any"
+          class="conv__amount"
+          [value]="amount()"
+          (input)="onAmount($event)"
+        />
+      </div>
+
+      <app-currency-select
+        label="From"
+        [currencies]="options()"
+        [value]="from()"
+        (valueChange)="from.set($event)"
+      />
+
+      <button type="button" class="conv__swap" aria-label="Swap currencies" (click)="swap()">
+        ⇄
+      </button>
+
+      <app-currency-select
+        label="To"
+        [currencies]="options()"
+        [value]="to()"
+        (valueChange)="to.set($event)"
+      />
+    </div>
+
+    <div class="conv__result" aria-live="polite">
+      @if (result() !== null) {
+        <div class="conv__result-value">
+          {{ amount() | rateFormat }} {{ from() }} =
+          <strong>{{ result()! | rateFormat }} {{ to() }}</strong>
+        </div>
+        <div class="conv__result-rate">1 {{ from() }} = {{ unitRate()! | rateFormat }} {{ to() }}</div>
+      } @else {
+        <div class="conv__result-error">Enter a valid amount to convert.</div>
+      }
+    </div>
+  }
+</app-card>
