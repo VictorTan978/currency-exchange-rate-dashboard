@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
+import { silent } from '../interceptors/api-status.interceptor';
 import { ConversionOutcome } from '../models/conversion.model';
 import { PairConversionApiResponse } from '../models/rate.model';
 
@@ -64,7 +65,10 @@ export class ConversionService {
 
     const startedAt = performance.now();
     const url = `${API_CONFIG.exchangeRatePairUrl}/${from}/${to}/${amount}`;
-    return this.http.get<PairConversionApiResponse>(url).pipe(
+    // Silent: a failure here falls back to local arithmetic and still produces a
+    // result, so the global dialogs would interrupt a flow that didn't break.
+    // The calculator's own `pending` state covers the in-flight case inline.
+    return this.http.get<PairConversionApiResponse>(url, { context: silent() }).pipe(
       map((res): ConversionOutcome => {
         if (res.result !== 'success') {
           throw new Error(res['error-type'] ?? 'Pair conversion failed');

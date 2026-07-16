@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
+import { loadingMessage } from '../interceptors/api-status.interceptor';
 import { currencyName } from '../models/currency.model';
 import { ExchangeRateApiResponse, Rate, RatesSnapshot } from '../models/rate.model';
 import { CurrencyService } from './currency.service';
@@ -46,14 +47,16 @@ export class ExchangeRateService {
   /** Pure fetch + map (no side effects) — convenient for unit testing. */
   fetchRates(base: string): Observable<RatesSnapshot> {
     const url = `${API_CONFIG.exchangeRateBaseUrl}/${base}`;
-    return this.http.get<ExchangeRateApiResponse>(url).pipe(
-      map((res) => {
-        if (res.result !== 'success') {
-          throw new Error(res['error-type'] ?? 'Failed to load exchange rates');
-        }
-        return this.toSnapshot(res);
-      }),
-    );
+    return this.http
+      .get<ExchangeRateApiResponse>(url, { context: loadingMessage('Loading exchange rates…') })
+      .pipe(
+        map((res) => {
+          if (res.result !== 'success') {
+            throw new Error(res['error-type'] ?? 'Failed to load exchange rates');
+          }
+          return this.toSnapshot(res);
+        }),
+      );
   }
 
   /** Loads rates for `base` and updates the loading/error/data signals. */

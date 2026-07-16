@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
+import { loadingMessage, silent } from '../interceptors/api-status.interceptor';
 import { Currency } from '../models/currency.model';
 import { CurrencySeries, FrankfurterTimeSeriesResponse } from '../models/historical.model';
 
@@ -17,8 +18,10 @@ export class HistoricalService {
 
   /** Returns the list of currencies Frankfurter supports (code + name). */
   getCurrencies(): Observable<Currency[]> {
+    // Silent: populates the chart's picker in the background; the chart's own
+    // request is the one worth a dialog.
     return this.http
-      .get<Record<string, string>>(`${API_CONFIG.frankfurterBaseUrl}/currencies`)
+      .get<Record<string, string>>(`${API_CONFIG.frankfurterBaseUrl}/currencies`, { context: silent() })
       .pipe(map((res) => Object.entries(res).map(([code, name]) => ({ code, name }))));
   }
 
@@ -30,7 +33,10 @@ export class HistoricalService {
     const params = new HttpParams().set('base', base).set('symbols', symbols.join(','));
     const url = `${API_CONFIG.frankfurterBaseUrl}/${start}..${end}`;
     return this.http
-      .get<FrankfurterTimeSeriesResponse>(url, { params })
+      .get<FrankfurterTimeSeriesResponse>(url, {
+        params,
+        context: loadingMessage('Loading historical rates…'),
+      })
       .pipe(map((res) => this.toSeries(res, symbols)));
   }
 

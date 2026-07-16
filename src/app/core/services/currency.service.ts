@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
+import { silent } from '../interceptors/api-status.interceptor';
 import {
   COMMON_CURRENCIES,
   CURRENCY_NAMES,
@@ -39,16 +40,20 @@ export class CurrencyService {
 
   /** Pure fetch + map (no side effects) — convenient for unit testing. */
   fetchCodes(): Observable<Currency[]> {
-    return this.http.get<SupportedCodesResponse>(API_CONFIG.exchangeRateCodesUrl).pipe(
-      map((res) => {
-        if (res.result !== 'success') {
-          throw new Error(res['error-type'] ?? 'Failed to load supported currencies');
-        }
-        return res.supported_codes
-          .map(([code, name]) => ({ code, name }))
-          .sort((a, b) => a.code.localeCompare(b.code));
-      }),
-    );
+    // Silent: this runs at startup behind a working static fallback, so it has
+    // no loading state to show and nothing to tell the user when it fails.
+    return this.http
+      .get<SupportedCodesResponse>(API_CONFIG.exchangeRateCodesUrl, { context: silent() })
+      .pipe(
+        map((res) => {
+          if (res.result !== 'success') {
+            throw new Error(res['error-type'] ?? 'Failed to load supported currencies');
+          }
+          return res.supported_codes
+            .map(([code, name]) => ({ code, name }))
+            .sort((a, b) => a.code.localeCompare(b.code));
+        }),
+      );
   }
 
   /**

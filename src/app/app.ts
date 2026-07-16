@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { ThemeService } from './core/services/theme.service';
+import { ErrorDialogComponent } from './shared/components/error-dialog/error-dialog.component';
+import { LoadingDialogComponent } from './shared/components/loading-dialog/loading-dialog.component';
 
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, LoadingDialogComponent, ErrorDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

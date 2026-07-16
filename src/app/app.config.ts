@@ -6,10 +6,11 @@ import {
   provideZoneChangeDetection,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 import { routes } from './app.routes';
+import { apiStatusInterceptor } from './core/interceptors/api-status.interceptor';
 import { CurrencyService } from './core/services/currency.service';
 
 export const appConfig: ApplicationConfig = {
@@ -17,7 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([apiStatusInterceptor])),
     provideCharts(withDefaultRegisterables()),
     // Fire-and-forget: the static currency list renders until this resolves, so
     // startup isn't blocked on it (and isn't broken by it failing).
