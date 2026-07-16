@@ -20,6 +20,18 @@ export interface ExchangeRateApiResponse {
   'error-type'?: string;
 }
 
+/** Raw response shape from the ExchangeRate-API keyed "pair" endpoint. */
+export interface PairConversionApiResponse {
+  result: 'success' | 'error';
+  base_code: string;
+  target_code: string;
+  /** Unit rate: 1 `base_code` = `conversion_rate` `target_code`. */
+  conversion_rate: number;
+  /** The requested amount, already converted by the provider. */
+  conversion_result: number;
+  'error-type'?: string;
+}
+
 /** A fully-loaded snapshot of latest rates for one base currency. */
 export interface RatesSnapshot {
   base: string;

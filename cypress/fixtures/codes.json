@@ -1,0 +1,10 @@
+{
+  "result": "success",
+  "supported_codes": [
+    ["CHF", "Swiss Franc"],
+    ["EUR", "Euro"],
+    ["GBP", "Pound Sterling"],
+    ["JPY", "Japanese Yen"],
+    ["USD", "United States Dollar"]
+  ]
+}

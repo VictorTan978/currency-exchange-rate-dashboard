@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe } from '@angular/common';
 
 import { API_CONFIG } from '../../core/config/api.config';
-import { COMMON_CURRENCIES } from '../../core/models/currency.model';
 import { Rate } from '../../core/models/rate.model';
+import { CurrencyService } from '../../core/services/currency.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { CurrencySelectComponent } from '../../shared/components/currency-select/currency-select.component';
@@ -38,9 +38,10 @@ import { SearchFilterComponent } from '../search-filter/search-filter.component'
 })
 export class RatesTableComponent {
   private readonly service = inject(ExchangeRateService);
+  private readonly currencies = inject(CurrencyService);
   private readonly rateFormat = new RateFormatPipe();
 
-  readonly baseOptions = COMMON_CURRENCIES;
+  readonly baseOptions = this.currencies.currencies;
   readonly base = signal<string>(API_CONFIG.defaultBaseCurrency);
   readonly searchTerm = signal('');
 

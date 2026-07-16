@@ -21,7 +21,7 @@ import { Currency } from '../../../core/models/currency.model';
     >
       @for (currency of currencies(); track currency.code) {
         <option [value]="currency.code" [selected]="currency.code === value()">
-          {{ currency.code }} — {{ currency.name }}
+          {{ currency.code }} {{ currency.name }}
         </option>
       }
     </select>

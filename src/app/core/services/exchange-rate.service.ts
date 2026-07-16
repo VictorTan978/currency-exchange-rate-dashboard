@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 import { currencyName } from '../models/currency.model';
 import { ExchangeRateApiResponse, Rate, RatesSnapshot } from '../models/rate.model';
+import { CurrencyService } from './currency.service';
 
 /**
  * Fetches the latest exchange rates from the ExchangeRate-API open endpoint and
@@ -14,13 +15,22 @@ import { ExchangeRateApiResponse, Rate, RatesSnapshot } from '../models/rate.mod
 @Injectable({ providedIn: 'root' })
 export class ExchangeRateService {
   private readonly http = inject(HttpClient);
+  private readonly currencies = inject(CurrencyService);
 
   private readonly _snapshot = signal<RatesSnapshot | null>(null);
   private readonly _loading = signal(false);
   private readonly _error = signal<string | null>(null);
 
-  /** All rates for the currently loaded base currency. */
-  readonly rates = computed<Rate[]>(() => this._snapshot()?.rates ?? []);
+  /**
+   * All rates for the currently loaded base currency, with display names joined
+   * from the provider's `/codes` list. Recomputes when that list resolves, so
+   * names upgrade from the static fallback without refetching rates.
+   */
+  readonly rates = computed<Rate[]>(() => {
+    const rates = this._snapshot()?.rates ?? [];
+    const names = this.currencies.nameMap();
+    return rates.map((r) => ({ ...r, name: names[r.code] ?? r.name }));
+  });
   /** The currently loaded base currency code. */
   readonly base = computed(() => this._snapshot()?.base ?? API_CONFIG.defaultBaseCurrency);
   /** When the provider last refreshed these rates. */

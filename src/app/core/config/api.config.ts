@@ -1,15 +1,38 @@
 /**
  * Central API configuration.
  *
- * Two data sources are used deliberately (see README "Architecture decisions"):
+ * Four endpoints across two providers (see README "Architecture decisions"):
  *  - ExchangeRate-API open endpoint: free, no key, latest rates only.
- *    Powers the rates table and the conversion calculator.
+ *    Powers the rates table and the offline conversion fallback.
+ *  - ExchangeRate-API keyed "pair" endpoint: server-side conversion.
+ *    Powers the calculator's primary (online) path.
+ *  - ExchangeRate-API keyed "codes" endpoint: code → name for every supported
+ *    currency. Powers display names and the base-currency selectors.
  *  - Frankfurter: free, no key, provides historical time-series (ECB data).
- *    Powers the historical trends chart only.
+ *    Powers the historical trends chart only. Its currency list stays separate
+ *    on purpose — it's the subset the chart can actually plot (~30 of ~160).
  */
+
+/**
+ * ExchangeRate-API keyed v6 root.
+ *
+ * The key is readable by anyone who opens the deployed bundle — a browser app
+ * has nowhere to hide it. The free tier is read-only and rate-limited, so the
+ * exposure is a quota risk rather than a data risk; a production build would
+ * proxy this through a backend that holds the key server-side.
+ */
+const EXCHANGE_RATE_KEYED_ROOT = 'https://v6.exchangerate-api.com/v6/8686290593f249403f2e44c6';
+
 export const API_CONFIG = {
   /** ExchangeRate-API free "open access" base (no API key required). */
   exchangeRateBaseUrl: 'https://open.er-api.com/v6/latest',
+
+  /** Keyed v6 "pair" endpoint: `{pairUrl}/{from}/{to}/{amount}`. */
+  exchangeRatePairUrl: `${EXCHANGE_RATE_KEYED_ROOT}/pair`,
+
+  /** Keyed v6 "codes" endpoint: authoritative code → name list for every
+   * currency the provider quotes. Replaces a hand-maintained name map. */
+  exchangeRateCodesUrl: `${EXCHANGE_RATE_KEYED_ROOT}/codes`,
 
   /** Frankfurter API base (no API key required). */
   frankfurterBaseUrl: 'https://api.frankfurter.dev/v1',

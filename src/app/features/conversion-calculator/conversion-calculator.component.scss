@@ -63,9 +63,51 @@ app-currency-select {
   color: var(--color-text-muted);
 }
 
+.conv__result--pending {
+  opacity: 0.65;
+}
+
+.conv__result-meta {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.conv__badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.conv__badge--api {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.conv__timing {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.conv__result-hint,
+.conv__result-error {
+  font-size: 0.95rem;
+}
+
+.conv__result-hint {
+  color: var(--color-text-muted);
+}
+
 .conv__result-error {
   color: var(--color-danger);
-  font-size: 0.95rem;
 }
 
 .conv__hint {

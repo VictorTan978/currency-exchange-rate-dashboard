@@ -35,13 +35,21 @@
       />
     </div>
 
-    <div class="conv__result" aria-live="polite">
-      @if (result() !== null) {
+    <div class="conv__result" [class.conv__result--pending]="pending()" aria-live="polite">
+      @if (outcome() === null) {
+        <div class="conv__result-hint">Converting…</div>
+      } @else if (result() !== null) {
         <div class="conv__result-value">
           {{ amount() | rateFormat }} {{ from() }} =
           <strong>{{ result()! | rateFormat }} {{ to() }}</strong>
         </div>
         <div class="conv__result-rate">1 {{ from() }} = {{ unitRate()! | rateFormat }} {{ to() }}</div>
+        <div class="conv__result-meta">
+          <span class="conv__badge" [class.conv__badge--api]="source() === 'api'">
+            {{ source() === 'api' ? 'Live API' : 'Local rates' }}
+          </span>
+          <span class="conv__timing">{{ elapsedLabel() }}</span>
+        </div>
       } @else {
         <div class="conv__result-error">Enter a valid amount to convert.</div>
       }

@@ -5,7 +5,7 @@
   <div card-actions class="rates__base">
     <app-currency-select
       label="Base currency"
-      [currencies]="baseOptions"
+      [currencies]="baseOptions()"
       [value]="base()"
       (valueChange)="onBaseChange($event)"
       [disabled]="loading()"

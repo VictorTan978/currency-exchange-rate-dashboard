@@ -4,11 +4,19 @@ export interface Currency {
   name: string;
 }
 
+/** Shape of the ExchangeRate-API `/codes` response. */
+export interface SupportedCodesResponse {
+  result: 'success' | 'error';
+  'error-type'?: string;
+  /** `[code, name]` tuples, e.g. `['AED', 'UAE Dirham']`. */
+  supported_codes: [string, string][];
+}
+
 /**
- * Static ISO 4217 code → display name map for the common currencies returned
- * by ExchangeRate-API. The API returns rates keyed by code only, so we join
- * against this map for friendly display and search. Unknown codes fall back to
- * the code itself via `currencyName()`.
+ * Static ISO 4217 code → display name fallback, used until (or if) the `/codes`
+ * endpoint resolves — rates arrive keyed by code only, so something has to name
+ * them on first paint. `CurrencyService` supersedes this with the provider's
+ * full list once loaded. Unknown codes fall back to the code itself.
  */
 export const CURRENCY_NAMES: Readonly<Record<string, string>> = {
   USD: 'US Dollar',
@@ -68,7 +76,7 @@ export function currencyName(code: string): string {
   return CURRENCY_NAMES[code] ?? code;
 }
 
-/** Common currencies (code + name), sorted by code — used for base-currency options. */
+/** Fallback base-currency options, sorted by code, for before `/codes` resolves. */
 export const COMMON_CURRENCIES: readonly Currency[] = Object.entries(CURRENCY_NAMES)
   .map(([code, name]) => ({ code, name }))
   .sort((a, b) => a.code.localeCompare(b.code));
