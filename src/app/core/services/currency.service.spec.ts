@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { CurrencyService } from './currency.service';
 import { API_CONFIG } from '../config/api.config';
 import { SupportedCodesResponse } from '../models/currency.model';
+import { goOffline } from '../../../testing/connectivity';
 
 const successResponse: SupportedCodesResponse = {
   result: 'success',
@@ -19,7 +20,18 @@ describe('CurrencyService', () => {
   let service: CurrencyService;
   let httpMock: HttpTestingController;
 
+  /**
+   * A second instance sharing the TestBed's injector (and so its HTTP mock),
+   * standing in for a fresh page load against an already-warm cache.
+   */
+  function freshService(): CurrencyService {
+    return TestBed.runInInjectionContext(() => new CurrencyService());
+  }
+
   beforeEach(() => {
+    // The offline cache is real localStorage, which outlives a TestBed. Without
+    // this, one spec's cached codes hydrate the next one's service.
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [CurrencyService, provideHttpClient(), provideHttpClientTesting()],
     });
@@ -77,5 +89,37 @@ describe('CurrencyService', () => {
 
   it('falls back to the code itself for an unknown currency', () => {
     expect(service.nameOf('ZZZ')).toBe('ZZZ');
+  });
+
+  describe('offline cache', () => {
+    it('serves the cached list without a request when offline', () => {
+      service.load();
+      httpMock.expectOne(API_CONFIG.exchangeRateCodesUrl).flush(successResponse);
+
+      goOffline();
+      const fresh = freshService();
+      fresh.load();
+
+      httpMock.expectNone(API_CONFIG.exchangeRateCodesUrl);
+      expect(fresh.currencies().map((c) => c.code)).toEqual(['AED', 'AFN', 'USD']);
+      expect(fresh.loaded()).toBeTrue();
+    });
+
+    it('hydrates from cache, then supersedes it with the live list when online', () => {
+      service.load();
+      httpMock.expectOne(API_CONFIG.exchangeRateCodesUrl).flush(successResponse);
+
+      const fresh = freshService();
+      fresh.load();
+      // Cache is in place before the request resolves.
+      expect(fresh.currencies().map((c) => c.code)).toEqual(['AED', 'AFN', 'USD']);
+
+      httpMock.expectOne(API_CONFIG.exchangeRateCodesUrl).flush({
+        result: 'success',
+        supported_codes: [['GBP', 'Pound Sterling']],
+      } as SupportedCodesResponse);
+
+      expect(fresh.currencies().map((c) => c.code)).toEqual(['GBP']);
+    });
   });
 });

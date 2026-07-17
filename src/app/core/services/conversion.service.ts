@@ -6,6 +6,7 @@ import { API_CONFIG } from '../config/api.config';
 import { silent } from '../interceptors/api-status.interceptor';
 import { ConversionOutcome } from '../models/conversion.model';
 import { PairConversionApiResponse } from '../models/rate.model';
+import { ConnectivityService } from './connectivity.service';
 
 /**
  * Currency conversion, with two interchangeable paths:
@@ -23,6 +24,7 @@ import { PairConversionApiResponse } from '../models/rate.model';
 @Injectable({ providedIn: 'root' })
 export class ConversionService {
   private readonly http = inject(HttpClient);
+  private readonly connectivity = inject(ConnectivityService);
 
   /**
    * Converts `amount` from currency `from` to currency `to` using a cross-rate.
@@ -59,7 +61,7 @@ export class ConversionService {
     ratesMap: Record<string, number>,
   ): Observable<ConversionOutcome> {
     // Invalid input can be rejected without spending a request against the quota.
-    if (!this.isOnline() || !Number.isFinite(amount) || amount < 0) {
+    if (this.connectivity.offline() || !Number.isFinite(amount) || amount < 0) {
       return of(this.convertLocally(amount, from, to, ratesMap));
     }
 
@@ -95,13 +97,5 @@ export class ConversionService {
     const value = this.convert(amount, from, to, ratesMap);
     const unitRate = this.convert(1, from, to, ratesMap);
     return { value, unitRate, source: 'local', elapsedMs: performance.now() - startedAt };
-  }
-
-  /**
-   * `navigator.onLine === false` reliably means "no network"; `true` only means
-   * an interface is up, so a live request can still fail — `catchError` covers that.
-   */
-  private isOnline(): boolean {
-    return typeof navigator === 'undefined' || navigator.onLine;
   }
 }

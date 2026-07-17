@@ -3,12 +3,14 @@ import { DatePipe } from '@angular/common';
 
 import { API_CONFIG } from '../../core/config/api.config';
 import { Rate } from '../../core/models/rate.model';
+import { ConnectivityService } from '../../core/services/connectivity.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { CurrencySelectComponent } from '../../shared/components/currency-select/currency-select.component';
 import { ErrorMessageComponent } from '../../shared/components/error-message/error-message.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
+import { StaleNoticeComponent } from '../../shared/components/stale-notice/stale-notice.component';
 import {
   SortableTableComponent,
   TableColumn,
@@ -32,6 +34,7 @@ import { SearchFilterComponent } from '../search-filter/search-filter.component'
     SortableTableComponent,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
+    StaleNoticeComponent,
   ],
   templateUrl: './rates-table.component.html',
   styleUrl: './rates-table.component.scss',
@@ -39,6 +42,7 @@ import { SearchFilterComponent } from '../search-filter/search-filter.component'
 export class RatesTableComponent {
   private readonly service = inject(ExchangeRateService);
   private readonly currencies = inject(CurrencyService);
+  private readonly connectivity = inject(ConnectivityService);
   private readonly rateFormat = new RateFormatPipe();
 
   readonly baseOptions = this.currencies.currencies;
@@ -48,6 +52,8 @@ export class RatesTableComponent {
   readonly loading = this.service.loading;
   readonly error = this.service.error;
   readonly lastUpdated = this.service.lastUpdated;
+  readonly cachedAt = this.service.cachedAt;
+  readonly offline = this.connectivity.offline;
 
   readonly columns: TableColumn<Rate>[] = [
     { key: 'code', label: 'Code' },

@@ -3,15 +3,18 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 import { HistoricalService } from './historical.service';
-import { CurrencySeries, FrankfurterTimeSeriesResponse } from '../models/historical.model';
+import { CurrencySeries, FrankfurterTimeSeriesResponse, TrendsOutcome } from '../models/historical.model';
 import { Currency } from '../models/currency.model';
 import { API_CONFIG } from '../config/api.config';
+import { goOffline } from '../../../testing/connectivity';
 
 describe('HistoricalService', () => {
   let service: HistoricalService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    // The offline cache is real localStorage, which outlives a TestBed.
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [HistoricalService, provideHttpClient(), provideHttpClientTesting()],
     });
@@ -72,5 +75,109 @@ describe('HistoricalService', () => {
         ],
       },
     ]);
+  });
+
+  describe('getTrends (offline cache)', () => {
+    const response: FrankfurterTimeSeriesResponse = {
+      amount: 1,
+      base: 'USD',
+      start_date: '2024-06-03',
+      end_date: '2024-06-05',
+      rates: { '2024-06-03': { EUR: 0.9 }, '2024-06-05': { EUR: 0.92 } },
+    };
+
+    /** Runs one successful getTrends, leaving its result in the cache. */
+    function warmCache(start = '2024-06-03', end = '2024-06-05'): void {
+      service.getTrends('USD', ['EUR'], start, end).subscribe();
+      httpMock
+        .expectOne((r) => r.url === `${API_CONFIG.frankfurterBaseUrl}/${start}..${end}`)
+        .flush(response);
+    }
+
+    it('reports live series as not cached', () => {
+      let outcome: TrendsOutcome | undefined;
+      service.getTrends('USD', ['EUR'], '2024-06-03', '2024-06-05').subscribe((o) => (outcome = o));
+      httpMock.expectOne((r) => r.url.includes('2024-06-03..2024-06-05')).flush(response);
+
+      expect(outcome!.cachedAt).toBeNull();
+      expect(outcome!.series[0].points.length).toBe(2);
+    });
+
+    it('serves cached series without a request when offline', () => {
+      warmCache();
+      goOffline();
+
+      let outcome: TrendsOutcome | undefined;
+      service.getTrends('USD', ['EUR'], '2024-06-03', '2024-06-05').subscribe((o) => (outcome = o));
+
+      httpMock.expectNone(() => true);
+      expect(outcome!.series[0].points.length).toBe(2);
+      expect(outcome!.cachedAt).toBeInstanceOf(Date);
+    });
+
+    it('falls back to cached series when the request fails', () => {
+      warmCache();
+
+      let outcome: TrendsOutcome | undefined;
+      service.getTrends('USD', ['EUR'], '2024-06-03', '2024-06-05').subscribe((o) => (outcome = o));
+      httpMock
+        .expectOne((r) => r.url.includes('2024-06-03..2024-06-05'))
+        .error(new ProgressEvent('network error'));
+
+      expect(outcome!.series[0].points.length).toBe(2);
+      expect(outcome!.cachedAt).toBeInstanceOf(Date);
+    });
+
+    it('errors when the request fails and nothing is cached', () => {
+      let errored = false;
+      service
+        .getTrends('USD', ['EUR'], '2024-06-03', '2024-06-05')
+        .subscribe({ error: () => (errored = true) });
+      httpMock
+        .expectOne((r) => r.url.includes('2024-06-03..2024-06-05'))
+        .error(new ProgressEvent('network error'));
+
+      expect(errored).toBeTrue();
+    });
+
+    it('hits the same cache entry when only the date window moves', () => {
+      warmCache();
+      goOffline();
+
+      // The window is always "the last 30 days", so it slides daily. Keying by
+      // date would miss the day after writing — exactly when the cache matters.
+      let outcome: TrendsOutcome | undefined;
+      service.getTrends('USD', ['EUR'], '2024-06-04', '2024-06-06').subscribe((o) => (outcome = o));
+
+      httpMock.expectNone(() => true);
+      expect(outcome!.cachedAt).toBeInstanceOf(Date);
+    });
+
+    it('keys on the selection regardless of the order it was picked in', () => {
+      service.getTrends('USD', ['GBP', 'EUR'], '2024-06-03', '2024-06-05').subscribe();
+      httpMock.expectOne((r) => r.url.includes('2024-06-03..2024-06-05')).flush(response);
+      goOffline();
+
+      let outcome: TrendsOutcome | undefined;
+      service.getTrends('USD', ['EUR', 'GBP'], '2024-06-03', '2024-06-05').subscribe((o) => (outcome = o));
+
+      httpMock.expectNone(() => true);
+      expect(outcome!.cachedAt).toBeInstanceOf(Date);
+    });
+
+    it('does not serve one base currency from another base cache', () => {
+      warmCache();
+      goOffline();
+
+      let errored = false;
+      service
+        .getTrends('EUR', ['EUR'], '2024-06-03', '2024-06-05')
+        .subscribe({ error: () => (errored = true) });
+      httpMock
+        .expectOne((r) => r.url.includes('2024-06-03..2024-06-05'))
+        .error(new ProgressEvent('network error'));
+
+      expect(errored).toBeTrue();
+    });
   });
 });

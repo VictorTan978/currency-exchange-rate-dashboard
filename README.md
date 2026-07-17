@@ -30,8 +30,8 @@ front-end assessment.
 - E2E tests (Cypress) covering the key user flows.
 - CI/CD pipeline (GitHub Actions) that lints, tests, builds, and deploys to GitHub Pages.
 
-> **Dynamic theming is implemented.** The remaining advanced features (real-time
-> polling and offline caching) are planned as a follow-up phase — see [Roadmap](#roadmap).
+> **Dynamic theming and offline mode are implemented.** The last advanced feature
+> (real-time polling) is planned as a follow-up phase — see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -154,6 +154,14 @@ repository.
 Advanced features implemented and remaining:
 
 - ✅ **Dynamic theming** — light/dark toggle (persisted, OS-aware).
+- ✅ **Offline mode** — last rates, history, and currency list cached in localStorage
+  (versioned, behind a `CacheService` that keeps the backend swappable). When the
+  network is down or a request fails, the dashboard serves the cached snapshot and
+  marks it "not live" — a global offline banner plus a per-panel notice showing when
+  the data was saved. The conversion calculator answers from local cross-rate
+  arithmetic over the cached rates, so it keeps working with no network at all.
 - ⬜ **Real-time updates** — polling with an optimized interval (paused when the tab is hidden).
-- ⬜ **Offline mode** — cache the last rates + history in localStorage/IndexedDB, with a
-  "data not live" indicator.
+
+> Offline mode caches *data*, not the app shell. Opening the page with no network
+> still relies on the browser's HTTP cache for the bundle; guaranteeing that is a
+> service worker's job, deliberately left as a separate concern.

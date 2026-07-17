@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { ConnectivityService } from './core/services/connectivity.service';
 import { ThemeService } from './core/services/theme.service';
 import { ErrorDialogComponent } from './shared/components/error-dialog/error-dialog.component';
 import { LoadingDialogComponent } from './shared/components/loading-dialog/loading-dialog.component';
@@ -15,4 +16,5 @@ import { LoadingDialogComponent } from './shared/components/loading-dialog/loadi
 export class App {
   protected readonly title = 'Currency Exchange Rate Dashboard';
   protected readonly theme = inject(ThemeService);
+  protected readonly connectivity = inject(ConnectivityService);
 }

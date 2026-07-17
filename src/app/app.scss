@@ -44,6 +44,22 @@
   border-color: var(--color-primary);
 }
 
+.app-offline {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-warning-text) 25%, transparent);
+}
+
+.app-offline__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.6rem 1.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
 .app-main {
   max-width: 1200px;
   margin: 0 auto;

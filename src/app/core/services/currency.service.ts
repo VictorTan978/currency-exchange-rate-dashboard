@@ -10,6 +10,10 @@ import {
   Currency,
   SupportedCodesResponse,
 } from '../models/currency.model';
+import { CacheService } from './cache.service';
+import { ConnectivityService } from './connectivity.service';
+
+const CACHE_KEY = 'codes';
 
 /**
  * Owns the list of currencies the provider supports, from ExchangeRate-API's
@@ -23,6 +27,8 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CurrencyService {
   private readonly http = inject(HttpClient);
+  private readonly cache = inject(CacheService);
+  private readonly connectivity = inject(ConnectivityService);
 
   private readonly _currencies = signal<readonly Currency[]>(COMMON_CURRENCIES);
   private readonly _loaded = signal(false);
@@ -57,14 +63,26 @@ export class CurrencyService {
   }
 
   /**
-   * Loads the supported list. Non-fatal by design: on failure the static
-   * fallback stays in place rather than emptying every currency dropdown.
+   * Loads the supported list, hydrating from cache first so the dropdowns show
+   * the full ~160 currencies offline instead of the ~10 static ones. Non-fatal
+   * by design: on failure the last-known list stays in place rather than
+   * emptying every currency dropdown.
    */
   load(): void {
+    const cached = this.cache.read<Currency[]>(CACHE_KEY);
+    if (cached) {
+      this._currencies.set(cached.payload);
+      this._loaded.set(true);
+    }
+    if (this.connectivity.offline()) {
+      return;
+    }
+
     this.fetchCodes().subscribe({
       next: (currencies) => {
         this._currencies.set(currencies);
         this._loaded.set(true);
+        this.cache.write(CACHE_KEY, currencies);
       },
       error: () => undefined,
     });

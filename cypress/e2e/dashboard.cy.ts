@@ -127,4 +127,76 @@ describe('Currency Exchange Rate Dashboard', () => {
     cy.get('app-historical-trends').contains('.chip', 'JPY').should('be.disabled');
     cy.get('app-historical-trends').contains('3/3');
   });
+
+  /**
+   * Cypress clears localStorage between tests, so each of these warms the cache
+   * through the `beforeEach` visit and then re-enters the app in the same test.
+   */
+  describe('offline mode', () => {
+    /** Waits for the first visit to have cached every payload the app stores. */
+    function waitForWarmCache(): void {
+      cy.wait('@codes');
+      cy.wait('@timeseries');
+    }
+
+    it('serves cached data, skips requests, and flags it when started offline', () => {
+      waitForWarmCache();
+
+      // Re-enter with the browser reporting no connection. Requests are still
+      // stubbed, so any that fire would succeed — proving the app skipped them.
+      cy.visit('/', {
+        onBeforeLoad(win) {
+          Object.defineProperty(win.navigator, 'onLine', { value: false, configurable: true });
+        },
+      });
+
+      cy.get('.app-offline').should('contain', "You're offline");
+
+      // Rates: cached, rendered, and marked not live.
+      cy.get('app-rates-table app-stale-notice').should('contain', 'Not live');
+      cy.get('app-rates-table app-stale-notice').should('contain', "You're offline");
+      cy.get('app-sortable-table tbody tr').should('have.length', 5);
+      cy.get('app-rates-table').contains('td', 'EUR');
+
+      // History: cached series still plot.
+      cy.get('app-historical-trends app-stale-notice').should('contain', 'Not live');
+      cy.get('app-historical-trends canvas').should('be.visible');
+
+      // Conversion: local arithmetic over the cached rates.
+      cy.get('#conv-amount').clear();
+      cy.get('#conv-amount').type('100');
+      cy.get('.conv__badge').should('contain', 'Local rates');
+      cy.get('.conv__result').should('contain', '80');
+
+      // Only the first (online) visit hit the network.
+      cy.get('@rates.all').should('have.length', 1);
+      cy.get('@pair.all').should('have.length', 0);
+    });
+
+    it('falls back to cached data when the providers are unreachable', () => {
+      waitForWarmCache();
+
+      // Online as far as the browser knows, but every provider is down.
+      cy.intercept('GET', '**/v6/latest/*', { forceNetworkError: true }).as('ratesDown');
+      cy.intercept('GET', '**/v1/*..*', { forceNetworkError: true }).as('timeseriesDown');
+      cy.reload();
+
+      // Not an outage the user can act on: cached data, marked, no error dialog.
+      cy.get('.app-offline').should('not.exist');
+      cy.get('app-rates-table app-stale-notice').should('contain', 'could not be reached');
+      cy.get('app-sortable-table tbody tr').should('have.length', 5);
+      cy.get('app-historical-trends app-stale-notice').should('exist');
+      cy.get('app-error-dialog dialog[open]').should('not.exist');
+      cy.get('app-rates-table app-error-message').should('not.exist');
+    });
+
+    it('shows an error, not a stale notice, when a cold start has no cache', () => {
+      cy.clearLocalStorage();
+      cy.intercept('GET', '**/v6/latest/*', { forceNetworkError: true }).as('ratesDown');
+      cy.visit('/');
+
+      cy.get('app-rates-table app-error-message').should('exist');
+      cy.get('app-rates-table app-stale-notice').should('not.exist');
+    });
+  });
 });

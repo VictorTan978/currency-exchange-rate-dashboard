@@ -8,12 +8,14 @@ import { BaseChartDirective } from 'ng2-charts';
 import { API_CONFIG } from '../../core/config/api.config';
 import { Currency } from '../../core/models/currency.model';
 import { Aggregation, CurrencySeries } from '../../core/models/historical.model';
+import { ConnectivityService } from '../../core/services/connectivity.service';
 import { HistoricalService } from '../../core/services/historical.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { CurrencySelectComponent } from '../../shared/components/currency-select/currency-select.component';
 import { ErrorMessageComponent } from '../../shared/components/error-message/error-message.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
+import { StaleNoticeComponent } from '../../shared/components/stale-notice/stale-notice.component';
 import { aggregate } from '../../shared/utils/aggregation.util';
 import { isoDateDaysAgo, toIsoDate } from '../../shared/utils/date.util';
 
@@ -38,6 +40,7 @@ const AGGREGATIONS: Aggregation[] = ['daily', 'weekly', 'monthly'];
     CurrencySelectComponent,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
+    StaleNoticeComponent,
   ],
   templateUrl: './historical-trends.component.html',
   styleUrl: './historical-trends.component.scss',
@@ -45,7 +48,10 @@ const AGGREGATIONS: Aggregation[] = ['daily', 'weekly', 'monthly'];
 export class HistoricalTrendsComponent {
   private readonly historical = inject(HistoricalService);
   private readonly theme = inject(ThemeService);
+  private readonly connectivity = inject(ConnectivityService);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly offline = this.connectivity.offline;
 
   readonly maxCurrencies = API_CONFIG.maxTrendCurrencies;
   readonly aggregations = AGGREGATIONS;
@@ -59,6 +65,8 @@ export class HistoricalTrendsComponent {
   private readonly series = signal<CurrencySeries[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  /** When the plotted series were cached, or null when they came from the network. */
+  readonly cachedAt = signal<Date | null>(null);
 
   /** Currency options excluding the base (can't compare a currency to itself). */
   readonly currencyOptions = computed(() => this.currencies().filter((c) => c.code !== this.base()));
@@ -133,6 +141,7 @@ export class HistoricalTrendsComponent {
     const symbols = this.selected();
     if (symbols.length === 0) {
       this.series.set([]);
+      this.cachedAt.set(null);
       return;
     }
     const end = toIsoDate(new Date());
@@ -140,12 +149,15 @@ export class HistoricalTrendsComponent {
 
     this.loading.set(true);
     this.error.set(null);
+    // `getTrends` serves cached series when offline or on failure, so an error
+    // here means there was nothing cached for this base + selection either.
     this.historical
-      .getTimeSeries(this.base(), symbols, start, end)
+      .getTrends(this.base(), symbols, start, end)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (series) => {
+        next: ({ series, cachedAt }) => {
           this.series.set(series);
+          this.cachedAt.set(cachedAt);
           this.loading.set(false);
         },
         error: () => {

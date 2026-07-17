@@ -5,6 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { API_CONFIG } from '../config/api.config';
 import { ConversionOutcome } from '../models/conversion.model';
 import { ConversionService } from './conversion.service';
+import { goOffline } from '../../../testing/connectivity';
 
 describe('ConversionService', () => {
   let service: ConversionService;
@@ -109,7 +110,7 @@ describe('ConversionService', () => {
     });
 
     it('skips the request entirely when offline', () => {
-      spyOnProperty(navigator, 'onLine', 'get').and.returnValue(false);
+      goOffline();
 
       const outcome = capture(service.convertLive(100, 'USD', 'EUR', rates));
 

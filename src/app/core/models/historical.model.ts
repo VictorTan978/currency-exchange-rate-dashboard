@@ -23,3 +23,10 @@ export interface CurrencySeries {
   code: string;
   points: TrendPoint[];
 }
+
+/** A set of series plus where it came from. */
+export interface TrendsOutcome {
+  series: CurrencySeries[];
+  /** When the series were cached, or null when they came from the network. */
+  cachedAt: Date | null;
+}

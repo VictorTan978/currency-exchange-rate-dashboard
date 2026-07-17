@@ -19,6 +19,10 @@
     }
   </div>
 
+  @if (cachedAt(); as saved) {
+    <app-stale-notice [cachedAt]="saved" [offline]="offline()" />
+  }
+
   @if (error()) {
     <app-error-message [message]="error()!" (retry)="retry()" />
   } @else {

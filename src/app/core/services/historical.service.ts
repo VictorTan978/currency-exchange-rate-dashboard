@@ -1,43 +1,113 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
-import { loadingMessage, silent } from '../interceptors/api-status.interceptor';
+import { SKIP_ERROR_DIALOG, loadingMessage, silent } from '../interceptors/api-status.interceptor';
 import { Currency } from '../models/currency.model';
-import { CurrencySeries, FrankfurterTimeSeriesResponse } from '../models/historical.model';
+import { CurrencySeries, FrankfurterTimeSeriesResponse, TrendsOutcome } from '../models/historical.model';
+import { CacheService } from './cache.service';
+import { ConnectivityService } from './connectivity.service';
 
 /**
  * Fetches historical exchange-rate time-series from the Frankfurter API for the
  * trends chart. Kept as pure Observable methods (no shared signal state) since
  * this data is scoped to the historical-trends feature component.
+ *
+ * {@link getTrends} adds the cache layer on top of the pure fetch: series are
+ * cached per base + currency selection and served back when the network is down
+ * or the request fails, so the chart still plots offline.
  */
 @Injectable({ providedIn: 'root' })
 export class HistoricalService {
   private readonly http = inject(HttpClient);
+  private readonly cache = inject(CacheService);
+  private readonly connectivity = inject(ConnectivityService);
 
   /** Returns the list of currencies Frankfurter supports (code + name). */
   getCurrencies(): Observable<Currency[]> {
+    const cached = this.cache.read<Currency[]>('history-currencies');
+    if (cached && this.connectivity.offline()) {
+      return of(cached.payload);
+    }
+
     // Silent: populates the chart's picker in the background; the chart's own
     // request is the one worth a dialog.
     return this.http
-      .get<Record<string, string>>(`${API_CONFIG.frankfurterBaseUrl}/currencies`, { context: silent() })
-      .pipe(map((res) => Object.entries(res).map(([code, name]) => ({ code, name }))));
+      .get<Record<string, string>>(`${API_CONFIG.frankfurterBaseUrl}/currencies`, {
+        context: silent(),
+      })
+      .pipe(
+        map((res) => Object.entries(res).map(([code, name]) => ({ code, name }))),
+        map((currencies) => {
+          this.cache.write('history-currencies', currencies);
+          return currencies;
+        }),
+        catchError((err: unknown) =>
+          cached ? of(cached.payload) : throwError(() => err),
+        ),
+      );
   }
 
   /**
    * Fetches daily rates for `symbols` against `base` between `start` and `end`
    * (inclusive, ISO dates), returning one chronological series per symbol.
+   *
+   * @param absorbErrors suppresses the global error dialog, for when the caller
+   *   has cached series to fall back on.
    */
-  getTimeSeries(base: string, symbols: string[], start: string, end: string): Observable<CurrencySeries[]> {
+  getTimeSeries(
+    base: string,
+    symbols: string[],
+    start: string,
+    end: string,
+    absorbErrors = false,
+  ): Observable<CurrencySeries[]> {
     const params = new HttpParams().set('base', base).set('symbols', symbols.join(','));
     const url = `${API_CONFIG.frankfurterBaseUrl}/${start}..${end}`;
+    const context = loadingMessage('Loading historical rates…');
+    if (absorbErrors) {
+      context.set(SKIP_ERROR_DIALOG, true);
+    }
     return this.http
-      .get<FrankfurterTimeSeriesResponse>(url, {
-        params,
-        context: loadingMessage('Loading historical rates…'),
-      })
+      .get<FrankfurterTimeSeriesResponse>(url, { params, context })
       .pipe(map((res) => this.toSeries(res, symbols)));
+  }
+
+  /**
+   * {@link getTimeSeries}, with the last good result for this base + selection
+   * as a fallback. Errors only when there's nothing cached to fall back on.
+   */
+  getTrends(base: string, symbols: string[], start: string, end: string): Observable<TrendsOutcome> {
+    const key = this.cacheKey(base, symbols);
+    const cached = this.cache.read<CurrencySeries[]>(key);
+
+    if (cached && this.connectivity.offline()) {
+      return of({ series: cached.payload, cachedAt: cached.cachedAt });
+    }
+
+    return this.getTimeSeries(base, symbols, start, end, cached !== null).pipe(
+      map((series): TrendsOutcome => {
+        this.cache.write(key, series);
+        return { series, cachedAt: null };
+      }),
+      catchError((err: unknown) =>
+        cached
+          ? of({ series: cached.payload, cachedAt: cached.cachedAt })
+          : throwError(() => err),
+      ),
+    );
+  }
+
+  /**
+   * Keyed by base + selection only — deliberately not by date range. The window
+   * is always "the last 30 days", so putting today's date in the key would miss
+   * every entry the day after it was written, which is exactly when the cache
+   * has to work. The cost is that a cached series can be a day or two short at
+   * the recent end; the notice tells the user it isn't live.
+   */
+  private cacheKey(base: string, symbols: string[]): string {
+    return `history:${base}|${[...symbols].sort().join(',')}`;
   }
 
   private toSeries(res: FrankfurterTimeSeriesResponse, symbols: string[]): CurrencySeries[] {
