@@ -75,7 +75,11 @@ describe('Currency Exchange Rate Dashboard', () => {
 
     cy.wait('@pair').its('request.url').should('include', '/pair/USD/EUR/100');
     cy.get('.conv__badge').should('contain', 'Live API');
-    cy.get('.conv__timing').should('match', /\d|<0\.1/);
+    // `.invoke('text')` first: on a jQuery subject, `match` is chai-jquery's
+    // CSS-selector assertion, not chai's regex one.
+    cy.get('.conv__timing')
+      .invoke('text')
+      .should('match', /(\d|<0\.1)\s*ms/);
     cy.get('.conv__result').should('contain', '80');
   });
 
