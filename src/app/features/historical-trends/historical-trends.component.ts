@@ -49,6 +49,7 @@ export class HistoricalTrendsComponent {
 
   readonly maxCurrencies = API_CONFIG.maxTrendCurrencies;
   readonly aggregations = AGGREGATIONS;
+  readonly limitHint = `You can compare up to ${API_CONFIG.maxTrendCurrencies} currencies. Remove one to pick another.`;
 
   readonly currencies = signal<Currency[]>([]);
   readonly base = signal('USD');
