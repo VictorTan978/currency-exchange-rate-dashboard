@@ -191,9 +191,16 @@ describe('Currency Exchange Rate Dashboard', () => {
     });
 
     it('shows an error, not a stale notice, when a cold start has no cache', () => {
-      cy.clearLocalStorage();
       cy.intercept('GET', '**/v6/latest/*', { forceNetworkError: true }).as('ratesDown');
-      cy.visit('/');
+      // Clear inside the fresh window, right before the app boots — the previous
+      // (beforeEach) visit warmed the rates cache, and `cy.clearLocalStorage()`
+      // races that write on a same-origin re-visit, leaving a snapshot the app
+      // would serve as stale instead of erroring.
+      cy.visit('/', {
+        onBeforeLoad(win) {
+          win.localStorage.clear();
+        },
+      });
 
       cy.get('app-rates-table app-error-message').should('exist');
       cy.get('app-rates-table app-stale-notice').should('not.exist');
