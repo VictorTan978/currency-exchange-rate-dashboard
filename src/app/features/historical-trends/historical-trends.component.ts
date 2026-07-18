@@ -161,6 +161,11 @@ export class HistoricalTrendsComponent {
           this.loading.set(false);
         },
         error: () => {
+          // Nothing cached for this selection: drop any series/notice left over
+          // from a previous selection so the error shows alone, not stacked on a
+          // stale "cached data" notice for data we're no longer displaying.
+          this.series.set([]);
+          this.cachedAt.set(null);
           this.error.set('Could not load historical data.');
           this.loading.set(false);
         },
