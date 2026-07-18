@@ -1,32 +1,36 @@
-<header class="app-header">
-  <div class="app-header__inner">
-    <span class="app-header__logo" aria-hidden="true">💱</span>
-    <h1>{{ title }}</h1>
-    <button
-      type="button"
-      class="app-header__theme"
-      [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
-      [attr.aria-pressed]="theme.isDark()"
-      (click)="theme.toggle()"
-    >
-      {{ theme.isDark() ? '☀️' : '🌙' }}
-    </button>
-  </div>
-</header>
-
-<!-- App-wide statement of the connection. Each panel marks its own data
-     separately, since what's cached and how old it is varies per panel. -->
-@if (connectivity.offline()) {
-  <div class="app-offline" role="status">
-    <div class="app-offline__inner">
-      <span aria-hidden="true">⚠</span>
-      <span>
-        <strong>You're offline.</strong>
-        Showing the last data saved on this device — rates are not live and may have moved.
-      </span>
+<!-- Header + offline notice share one sticky container so the offline
+     banner stays pinned on top and is always visible while scrolling. -->
+<div class="app-topbar">
+  <header class="app-header">
+    <div class="app-header__inner">
+      <span class="app-header__logo" aria-hidden="true">💱</span>
+      <h1>{{ title }}</h1>
+      <button
+        type="button"
+        class="app-header__theme"
+        [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+        [attr.aria-pressed]="theme.isDark()"
+        (click)="theme.toggle()"
+      >
+        {{ theme.isDark() ? '☀️' : '🌙' }}
+      </button>
     </div>
-  </div>
-}
+  </header>
+
+  <!-- App-wide statement of the connection. Each panel marks its own data
+       separately, since what's cached and how old it is varies per panel. -->
+  @if (connectivity.offline()) {
+    <div class="app-offline" role="status">
+      <div class="app-offline__inner">
+        <span aria-hidden="true">⚠</span>
+        <span>
+          <strong>You're offline.</strong>
+          Showing the last data saved on this device — rates are not live and may have moved.
+        </span>
+      </div>
+    </div>
+  }
+</div>
 
 <main class="app-main">
   <router-outlet />
