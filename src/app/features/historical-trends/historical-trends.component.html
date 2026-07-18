@@ -30,6 +30,7 @@
         type="button"
         class="chip"
         [class.chip--on]="isSelected(currency.code)"
+        [style.--chip-color]="colorFor(currency.code)"
         [disabled]="!isSelected(currency.code) && atLimit()"
         [attr.aria-pressed]="isSelected(currency.code)"
         [title]="!isSelected(currency.code) && atLimit() ? limitHint : currency.name"

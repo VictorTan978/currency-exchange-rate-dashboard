@@ -55,9 +55,11 @@
 }
 
 .chip--on {
-  background: var(--color-primary);
-  color: var(--color-primary-contrast);
-  border-color: var(--color-primary);
+  // Matches the chip to its line/legend color in the chart. `--chip-color` is
+  // set per-chip from the series palette; falls back to the theme primary.
+  background: var(--chip-color, var(--color-primary));
+  color: #fff;
+  border-color: var(--chip-color, var(--color-primary));
 }
 
 .chip:disabled {

@@ -197,6 +197,21 @@ export class HistoricalTrendsComponent {
     return this.selected().includes(code);
   }
 
+  /**
+   * The series color assigned to `code`'s line/legend point, or null when it
+   * isn't selected. Mirrors the dataset coloring in {@link chartData}: series
+   * are built from `selected()` in order (see `toSeries`), so a currency's line
+   * color is its slot in the selection.
+   */
+  colorFor(code: string): string | null {
+    const index = this.selected().indexOf(code);
+    if (index === -1) {
+      return null;
+    }
+    const colors = this.seriesColors();
+    return colors[index % colors.length];
+  }
+
   private seriesColors(): string[] {
     return this.theme.isDark() ? SERIES_COLORS_DARK : SERIES_COLORS_LIGHT;
   }
