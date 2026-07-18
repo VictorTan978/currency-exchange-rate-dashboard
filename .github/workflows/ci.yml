@@ -74,7 +74,7 @@ jobs:
           browser: chrome
 
   deploy:
-    name: Deploy to GitHub Pages (staging)
+    name: Deploy to GitHub Pages
     needs: [build-test, e2e]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
