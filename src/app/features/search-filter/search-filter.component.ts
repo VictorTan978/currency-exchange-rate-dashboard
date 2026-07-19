@@ -50,6 +50,11 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
         outline: none;
         min-width: 0;
       }
+      /* Hide the browser's native clear button so it doesn't duplicate ours (WebKit/Blink). */
+      .search__input::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
+      }
       .search__clear {
         border: none;
         background: transparent;
