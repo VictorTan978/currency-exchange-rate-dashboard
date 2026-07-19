@@ -1,9 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
-import { SKIP_ERROR_DIALOG, loadingMessage } from '../interceptors/api-status.interceptor';
+import { SKIP_ERROR_DIALOG, loadingMessage, silent } from '../interceptors/api-status.interceptor';
 import { CachedEntry } from '../models/cache.model';
 import { currencyName } from '../models/currency.model';
 import { ExchangeRateApiResponse, Rate, RatesSnapshot } from '../models/rate.model';
@@ -67,11 +67,40 @@ export class ExchangeRateService {
    *   has a cached snapshot to fall back on and the user loses nothing.
    */
   fetchRates(base: string, absorbErrors = false): Observable<RatesSnapshot> {
-    const url = `${API_CONFIG.exchangeRateBaseUrl}/${base}`;
     const context = loadingMessage('Loading exchange rates…');
     if (absorbErrors) {
       context.set(SKIP_ERROR_DIALOG, true);
     }
+    return this.requestSnapshot(base, context);
+  }
+
+  /**
+   * Real-time updates: silently re-fetches the currently loaded base in the
+   * background, driven by the rates table's poller. Uses no global dialogs and
+   * swallows failures — a routine poll must never flash a spinner or raise an
+   * error the user didn't ask for; it just refreshes the numbers in place, or
+   * leaves the last good ones untouched until the next tick.
+   *
+   * Skips entirely while offline (the request can only fail) or while a
+   * foreground {@link load} is already in flight (it would race it). The poller
+   * further gates on tab visibility, so together these keep API calls to the
+   * moments a fresh number can actually reach the user.
+   */
+  refresh(): void {
+    if (this.connectivity.offline() || this._loading()) {
+      return;
+    }
+    const base = this.base();
+    this.requestSnapshot(base, silent()).subscribe({
+      next: (snapshot) => this.applySnapshot(base, snapshot),
+      // Keep the current snapshot; the next tick retries.
+      error: () => undefined,
+    });
+  }
+
+  /** Shared fetch + validate + map for both the foreground and background paths. */
+  private requestSnapshot(base: string, context: HttpContext): Observable<RatesSnapshot> {
+    const url = `${API_CONFIG.exchangeRateBaseUrl}/${base}`;
     return this.http.get<ExchangeRateApiResponse>(url, { context }).pipe(
       map((res) => {
         if (res.result !== 'success') {
@@ -101,10 +130,8 @@ export class ExchangeRateService {
     this._error.set(null);
     this.fetchRates(base, cached !== null).subscribe({
       next: (snapshot) => {
-        this._snapshot.set(snapshot);
-        this._cachedAt.set(null);
+        this.applySnapshot(base, snapshot);
         this._loading.set(false);
-        this.cache.write(this.cacheKey(base), snapshot);
       },
       error: (err: Error) => {
         this._loading.set(false);
@@ -117,6 +144,13 @@ export class ExchangeRateService {
         this._error.set(err.message || 'Failed to load exchange rates');
       },
     });
+  }
+
+  /** Commits a freshly fetched snapshot as the live source of truth and caches it. */
+  private applySnapshot(base: string, snapshot: RatesSnapshot): void {
+    this._snapshot.set(snapshot);
+    this._cachedAt.set(null);
+    this.cache.write(this.cacheKey(base), snapshot);
   }
 
   private serveFromCache(cached: CachedEntry<RatesSnapshot>): void {

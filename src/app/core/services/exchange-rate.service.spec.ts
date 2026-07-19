@@ -90,6 +90,60 @@ describe('ExchangeRateService', () => {
     expect(service.loading()).toBeFalse();
   });
 
+  describe('refresh (real-time poll)', () => {
+    /** Loads USD rates so there is a live snapshot for a poll to update. */
+    function warmLive(): void {
+      service.load('USD');
+      httpMock.expectOne(`${API_CONFIG.exchangeRateBaseUrl}/USD`).flush(successResponse);
+    }
+
+    it('silently re-fetches the current base and updates the rates in place', () => {
+      warmLive();
+
+      service.refresh();
+      const req = httpMock.expectOne(`${API_CONFIG.exchangeRateBaseUrl}/USD`);
+      req.flush({ ...successResponse, rates: { USD: 1, EUR: 0.9, JPY: 150 } });
+
+      expect(service.ratesMap()['EUR']).toBe(0.9);
+      // A poll leaves the data live, never marks it stale, and stays quiet.
+      expect(service.stale()).toBeFalse();
+      expect(service.loading()).toBeFalse();
+      expect(service.error()).toBeNull();
+    });
+
+    it('keeps the last good rates when a poll fails', () => {
+      warmLive();
+
+      service.refresh();
+      httpMock
+        .expectOne(`${API_CONFIG.exchangeRateBaseUrl}/USD`)
+        .error(new ProgressEvent('network error'));
+
+      expect(service.ratesMap()['EUR']).toBe(0.8);
+      expect(service.error()).toBeNull();
+    });
+
+    it('does not hit the network while offline', () => {
+      warmLive();
+      goOffline();
+
+      service.refresh();
+
+      httpMock.expectNone(`${API_CONFIG.exchangeRateBaseUrl}/USD`);
+      expect(service.ratesMap()['EUR']).toBe(0.8); // untouched
+    });
+
+    it('does not race a foreground load already in flight', () => {
+      service.load('USD'); // in flight, loading() is true
+      service.refresh();
+
+      // Only the load's request exists; refresh stood down.
+      httpMock.expectOne(`${API_CONFIG.exchangeRateBaseUrl}/USD`).flush(successResponse);
+      httpMock.expectNone(`${API_CONFIG.exchangeRateBaseUrl}/USD`);
+      expect(service.rates().length).toBe(3);
+    });
+  });
+
   describe('offline cache', () => {
     /** Loads USD rates into the cache via a successful fetch. */
     function warmCache(): void {

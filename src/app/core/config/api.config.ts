@@ -42,4 +42,16 @@ export const API_CONFIG = {
 
   /** Maximum number of currencies that can be compared on the trends chart. */
   maxTrendCurrencies: 3,
+
+  /**
+   * How often the live rates table polls for fresh data, in milliseconds.
+   *
+   * The open endpoint only recomputes rates about once a day, so this is a
+   * responsiveness/quota tradeoff rather than a race for the newest number:
+   * short enough that a reopened or long-lived tab reflects a daily update
+   * within a minute, long enough not to hammer a free, rate-limited endpoint.
+   * The real savings come from the poller itself, which suppresses requests
+   * while offline or while the tab is hidden (see RatesTableComponent).
+   */
+  ratesRefreshIntervalMs: 60_000,
 } as const;

@@ -25,6 +25,7 @@ function fakeExchangeRateService(cachedAt: Date | null) {
     lastUpdated: signal(new Date('2024-06-05T09:00:00Z')),
     cachedAt: signal(cachedAt),
     load: () => undefined,
+    refresh: () => undefined,
   };
 }
 

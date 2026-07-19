@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
+import { filter, fromEvent, merge, timer } from 'rxjs';
 
 import { API_CONFIG } from '../../core/config/api.config';
 import { Rate } from '../../core/models/rate.model';
@@ -74,6 +76,31 @@ export class RatesTableComponent {
 
   constructor() {
     this.service.load(this.base());
+    this.startRealTimeUpdates();
+  }
+
+  /**
+   * Real-time updates: keeps the table fresh by asking the service to silently
+   * re-fetch on an interval, plus at the two moments a stale table is most
+   * visible — when the connection returns and when the user comes back to the
+   * tab. The service itself no-ops a poll while offline or mid-load.
+   *
+   * Optimising the interval is mostly about *not* polling: a hidden tab needs
+   * nothing live, so the visibility gate drops every background tick, and the
+   * visibility/online triggers mean the interval can stay relaxed without the
+   * user ever seeing obviously old numbers.
+   */
+  private startRealTimeUpdates(): void {
+    merge(
+      timer(API_CONFIG.ratesRefreshIntervalMs, API_CONFIG.ratesRefreshIntervalMs),
+      fromEvent(window, 'online'),
+      fromEvent(document, 'visibilitychange'),
+    )
+      .pipe(
+        filter(() => !document.hidden),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.service.refresh());
   }
 
   onBaseChange(code: string): void {
