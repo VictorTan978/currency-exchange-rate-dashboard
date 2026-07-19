@@ -22,6 +22,9 @@ front-end assessment.
 
 - **Dynamic theming** — light/dark toggle that persists to localStorage and follows
   the OS preference on first visit; the chart re-themes its palette and axis ink.
+- **Offline mode** — last rates, history, and currency list are cached in localStorage;
+  when the network is down the dashboard serves the cached snapshot and marks it "not
+  live," and the calculator keeps working from local cross-rate arithmetic.
 
 **Quality**
 
