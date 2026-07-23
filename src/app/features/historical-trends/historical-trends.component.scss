@@ -5,8 +5,115 @@
   flex-wrap: wrap;
 }
 
+// Shared wrapper so every control reads as "label above, box below" — matches
+// the currency-select's own layout so all three line up top and bottom.
+.trends__field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.trends__field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+// Segmented range control: From → To read as one object, echoing the
+// aggregation toggle so the two header controls feel like a matched set.
+.trends__range {
+  display: inline-flex;
+  align-items: stretch;
+  min-height: 2.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.trends__range:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.trends__range-input {
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0 0.7rem;
+  color-scheme: light dark;
+}
+
+.trends__range-input:focus {
+  outline: none;
+}
+
+.trends__range-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 140ms ease;
+}
+
+.trends__range-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.trends__range-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 0.35rem;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+// Quick-range presets: the app's chip language, sized down and range-tinted.
+.trends__presets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.trends__presets-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-right: 0.15rem;
+}
+
+.trends__preset {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 999px;
+  padding: 0.22rem 0.62rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.trends__preset:hover {
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
+.trends__preset--active {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
 .trends__agg {
   display: inline-flex;
+  min-height: 2.65rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -16,7 +123,7 @@
   border: none;
   background: var(--color-surface);
   color: var(--color-text-muted);
-  padding: 0.5rem 0.9rem;
+  padding: 0 0.9rem;
   font-weight: 600;
   font-size: 0.85rem;
 }

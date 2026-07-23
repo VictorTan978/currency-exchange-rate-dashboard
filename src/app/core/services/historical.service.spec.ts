@@ -140,17 +140,16 @@ describe('HistoricalService', () => {
       expect(errored).toBeTrue();
     });
 
-    it('hits the same cache entry when only the date window moves', () => {
-      warmCache();
-      goOffline();
+    it('keys per range: a different window is a cache miss, not a stale hit', () => {
+      warmCache('2024-06-03', '2024-06-05');
 
-      // The window is always "the last 30 days", so it slides daily. Keying by
-      // date would miss the day after writing — exactly when the cache matters.
+      // The range is user-chosen, so a different window is genuinely different
+      // data and must fetch fresh rather than serve the first range's series.
       let outcome: TrendsOutcome | undefined;
       service.getTrends('USD', ['EUR'], '2024-06-04', '2024-06-06').subscribe((o) => (outcome = o));
+      httpMock.expectOne((r) => r.url.includes('2024-06-04..2024-06-06')).flush(response);
 
-      httpMock.expectNone(() => true);
-      expect(outcome!.cachedAt).toBeInstanceOf(Date);
+      expect(outcome!.cachedAt).toBeNull();
     });
 
     it('keys on the selection regardless of the order it was picked in', () => {

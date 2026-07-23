@@ -1,4 +1,4 @@
-<app-card title="Historical Trends" subtitle="Rates vs {{ base() }} over the past month">
+<app-card title="Historical Trends" [subtitle]="rangeSubtitle()">
   <div card-actions class="trends__controls">
     <app-currency-select
       label="Base"
@@ -6,19 +6,63 @@
       [value]="base()"
       (valueChange)="onBaseChange($event)"
     />
-    <div class="trends__agg" role="group" aria-label="Aggregation">
-      @for (mode of aggregations; track mode) {
-        <button
-          type="button"
-          class="trends__agg-btn"
-          [class.trends__agg-btn--active]="aggregation() === mode"
-          [attr.aria-pressed]="aggregation() === mode"
-          (click)="setAggregation(mode)"
-        >
-          {{ mode | titlecase }}
-        </button>
-      }
+    <div class="trends__field">
+      <span class="trends__field-label" id="trends-range-label">Date range</span>
+      <div class="trends__range" role="group" aria-labelledby="trends-range-label">
+        <input
+          id="trends-start"
+          class="trends__range-input"
+          type="date"
+          aria-label="Start date"
+          [value]="startDate()"
+          [max]="endDate()"
+          (change)="onStartDateChange($any($event.target).value)"
+        />
+        <span class="trends__range-arrow" aria-hidden="true">&rarr;</span>
+        <input
+          id="trends-end"
+          class="trends__range-input"
+          type="date"
+          aria-label="End date"
+          [value]="endDate()"
+          [min]="startDate()"
+          [max]="today"
+          (change)="onEndDateChange($any($event.target).value)"
+        />
+      </div>
     </div>
+
+    <div class="trends__field">
+      <span class="trends__field-label">Interval</span>
+      <div class="trends__agg" role="group" aria-label="Aggregation">
+        @for (mode of aggregations; track mode) {
+          <button
+            type="button"
+            class="trends__agg-btn"
+            [class.trends__agg-btn--active]="aggregation() === mode"
+            [attr.aria-pressed]="aggregation() === mode"
+            (click)="setAggregation(mode)"
+          >
+            {{ mode | titlecase }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="trends__presets" role="group" aria-label="Quick date ranges">
+    <span class="trends__presets-label">Quick range</span>
+    @for (preset of presets; track preset.id) {
+      <button
+        type="button"
+        class="trends__preset"
+        [class.trends__preset--active]="activePreset() === preset.id"
+        [attr.aria-pressed]="activePreset() === preset.id"
+        (click)="applyPreset(preset)"
+      >
+        {{ preset.label }}
+      </button>
+    }
   </div>
 
   <div class="trends__chips">

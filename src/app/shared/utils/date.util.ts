@@ -37,3 +37,24 @@ export function startOfWeek(dateStr: string): string {
 export function monthKey(dateStr: string): string {
   return dateStr.slice(0, 7);
 }
+
+/**
+ * Number of distinct ISO-week buckets an inclusive [start, end] range touches —
+ * i.e. how many points a weekly aggregation of that range would yield.
+ */
+export function weeksSpanned(start: string, end: string): number {
+  const from = parseIsoDate(startOfWeek(start)).getTime();
+  const to = parseIsoDate(startOfWeek(end)).getTime();
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.round((to - from) / msPerWeek) + 1;
+}
+
+/**
+ * Number of distinct calendar-month buckets an inclusive [start, end] range
+ * touches — i.e. how many points a monthly aggregation would yield.
+ */
+export function monthsSpanned(start: string, end: string): number {
+  const from = parseIsoDate(start);
+  const to = parseIsoDate(end);
+  return (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth()) + 1;
+}

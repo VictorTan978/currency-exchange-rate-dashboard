@@ -79,7 +79,7 @@ export class HistoricalService {
    * as a fallback. Errors only when there's nothing cached to fall back on.
    */
   getTrends(base: string, symbols: string[], start: string, end: string): Observable<TrendsOutcome> {
-    const key = this.cacheKey(base, symbols);
+    const key = this.cacheKey(base, symbols, start, end);
     const cached = this.cache.read<CurrencySeries[]>(key);
 
     if (cached && this.connectivity.offline()) {
@@ -100,14 +100,15 @@ export class HistoricalService {
   }
 
   /**
-   * Keyed by base + selection only — deliberately not by date range. The window
-   * is always "the last 30 days", so putting today's date in the key would miss
-   * every entry the day after it was written, which is exactly when the cache
-   * has to work. The cost is that a cached series can be a day or two short at
-   * the recent end; the notice tells the user it isn't live.
+   * Keyed by base + selection + range. The range is user-chosen, so two ranges
+   * for the same base + selection are genuinely different data and must not
+   * share a cache entry — otherwise offline (or a failed fetch) could serve one
+   * range's series under another's request. The default range's end is today,
+   * so a cached entry for it won't be reused the next day; that's the cost of
+   * correct per-range caching, and the stale notice tells the user it isn't live.
    */
-  private cacheKey(base: string, symbols: string[]): string {
-    return `history:${base}|${[...symbols].sort().join(',')}`;
+  private cacheKey(base: string, symbols: string[], start: string, end: string): string {
+    return `history:${base}|${[...symbols].sort().join(',')}|${start}..${end}`;
   }
 
   private toSeries(res: FrankfurterTimeSeriesResponse, symbols: string[]): CurrencySeries[] {
