@@ -49,11 +49,27 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         font-size: 0.85rem;
         color: var(--color-text-muted);
       }
+      .card__titles {
+        min-width: 0;
+      }
       .card__actions {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         flex-wrap: wrap;
+        /* Keep header controls (selects, date ranges) inside the card instead of
+           letting their intrinsic width push past its edge. */
+        min-width: 0;
+        max-width: 100%;
+      }
+      @media (max-width: 620px) {
+        .card__head {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .card__actions {
+          width: 100%;
+        }
       }
     `,
   ],

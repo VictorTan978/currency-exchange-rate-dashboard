@@ -1,3 +1,16 @@
+.rates__base {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 620px) {
+  // Full-width select reads better than a truncated one once the header stacks.
+  .rates__base,
+  .rates__base app-currency-select {
+    width: 100%;
+  }
+}
+
 .rates__search {
   display: flex;
   align-items: center;

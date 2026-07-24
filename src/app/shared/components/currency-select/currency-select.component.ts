@@ -32,7 +32,10 @@ import { Currency } from '../../../core/models/currency.model';
         display: inline-flex;
         flex-direction: column;
         gap: 0.3rem;
+        /* A <select> is as wide as its longest option, so it must be allowed to
+           shrink below that intrinsic width or it overflows narrow cards. */
         min-width: 0;
+        max-width: 100%;
       }
       .cs__label {
         font-size: 0.8rem;
@@ -45,7 +48,10 @@ import { Currency } from '../../../core/models/currency.model';
         border: 1px solid var(--color-border);
         background: var(--color-surface);
         color: var(--color-text);
+        width: 100%;
+        min-width: 0;
         max-width: 100%;
+        text-overflow: ellipsis;
       }
       .cs__select:disabled {
         opacity: 0.6;
