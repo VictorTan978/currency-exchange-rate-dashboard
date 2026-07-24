@@ -73,44 +73,6 @@
   font-size: 0.95rem;
 }
 
-// Quick-range presets: the app's chip language, sized down and range-tinted.
-.trends__presets {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 1rem;
-}
-
-.trends__presets-label {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  margin-right: 0.15rem;
-}
-
-.trends__preset {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-text-muted);
-  border-radius: 999px;
-  padding: 0.22rem 0.62rem;
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
-}
-
-.trends__preset:hover {
-  color: var(--color-text);
-  border-color: var(--color-primary);
-}
-
-.trends__preset--active {
-  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
 .trends__agg {
   display: inline-flex;
   min-height: 2.65rem;

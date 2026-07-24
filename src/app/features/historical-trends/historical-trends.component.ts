@@ -26,20 +26,6 @@ const SERIES_COLORS_DARK = ['#3987e5', '#008300', '#d55181'];
 
 const AGGREGATIONS: Aggregation[] = ['daily', 'weekly', 'monthly'];
 
-/** Quick-range shortcuts for the date picker. `days` is the lookback from today; 'ytd' = since Jan 1. */
-interface RangePreset {
-  readonly id: string;
-  readonly label: string;
-  readonly span: number | 'ytd';
-}
-const RANGE_PRESETS: readonly RangePreset[] = [
-  { id: '7d', label: '7D', span: 7 },
-  { id: '30d', label: '30D', span: 30 },
-  { id: '90d', label: '90D', span: 90 },
-  { id: '6m', label: '6M', span: 182 },
-  { id: 'ytd', label: 'YTD', span: 'ytd' },
-];
-
 /**
  * Feature 2: historical trends chart. Compares up to 3 currencies against a base
  * over the past month, with a daily/weekly/monthly aggregation toggle. Data comes
@@ -84,8 +70,6 @@ export class HistoricalTrendsComponent {
   readonly startDate = signal(isoDateDaysAgo(30));
   readonly endDate = signal(this.today);
 
-  readonly presets = RANGE_PRESETS;
-
   private readonly series = signal<CurrencySeries[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -101,15 +85,6 @@ export class HistoricalTrendsComponent {
   readonly rangeSubtitle = computed(
     () => `Rates vs ${this.base()} · ${this.startDate()} → ${this.endDate()}`,
   );
-
-  /** The id of the preset matching the current range, or null for a custom range. */
-  readonly activePreset = computed(() => {
-    if (this.endDate() !== this.today) {
-      return null;
-    }
-    const start = this.startDate();
-    return this.presets.find((p) => this.presetStart(p) === start)?.id ?? null;
-  });
 
   /** Chart.js data built from the fetched series with the chosen aggregation applied. */
   readonly chartData = computed<ChartConfiguration<'line'>['data']>(() => {
@@ -241,19 +216,6 @@ export class HistoricalTrendsComponent {
     }
     this.keepAggregationInRange();
     this.reload();
-  }
-
-  /** Applies a quick-range preset: sets the range to end today and reload. */
-  applyPreset(preset: RangePreset): void {
-    this.startDate.set(this.presetStart(preset));
-    this.endDate.set(this.today);
-    this.keepAggregationInRange();
-    this.reload();
-  }
-
-  /** The ISO start date a preset resolves to, relative to today. */
-  private presetStart(preset: RangePreset): string {
-    return preset.span === 'ytd' ? `${this.today.slice(0, 4)}-01-01` : isoDateDaysAgo(preset.span);
   }
 
   toggleCurrency(code: string): void {

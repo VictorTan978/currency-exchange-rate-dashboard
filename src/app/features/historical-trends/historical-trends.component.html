@@ -50,21 +50,6 @@
     </div>
   </div>
 
-  <div class="trends__presets" role="group" aria-label="Quick date ranges">
-    <span class="trends__presets-label">Quick range</span>
-    @for (preset of presets; track preset.id) {
-      <button
-        type="button"
-        class="trends__preset"
-        [class.trends__preset--active]="activePreset() === preset.id"
-        [attr.aria-pressed]="activePreset() === preset.id"
-        (click)="applyPreset(preset)"
-      >
-        {{ preset.label }}
-      </button>
-    }
-  </div>
-
   <div class="trends__chips">
     <span class="trends__chips-label">
       Compare currencies ({{ selected().length }}/{{ maxCurrencies }}):
